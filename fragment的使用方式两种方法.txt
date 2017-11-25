@@ -1,0 +1,36 @@
+1. Declare the fragment inside the activity's layout file.
+		1. 在Activity的布局文件声明fragment的时候，必须添加一个id属性（或者tag属性）。
+		2. Activity必须更换为FragmentActivity
+
+
+2. Or, programmatically add the fragment to an existing ViewGroup.
+	
+				//将SecondFragment添加到Activity布局的FrameLayout中
+			SecondFragment secondFragment = new SecondFragment();
+			/**
+			 * 1. 获取v4包下的Fragment管理器
+			 */
+			FragmentManager fragmentManager = getSupportFragmentManager();//只能用于 管理v4包下的
+			//		android.app.FragmentManager fragmentManager = getFragmentManager();//、、只能用于管理app包下的
+			/**
+			 * 2. 开启Fragment事务
+			 */
+			FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+			/**
+			 * 3. 使用fragmentTransaction的添加（add）Fragment方法
+			 * 参数1：要将fragment添加到哪个ViewGroup中，就传哪个ViewGroup的id
+			 * 参数2：要添加的Fragment对象
+			 */
+			fragmentTransaction.add(R.id.fl_content, secondFragment);
+			/**
+			 * 4. 提交事务
+			 */
+			fragmentTransaction.commit();
+
+	3. 判断Fragment是否已经被添加到Activity中
+
+			//先判断当前Fragment有没有被添加
+			if (secondFragment.isAdded()) {
+				Toast.makeText(this, "已经被添加过了", Toast.LENGTH_SHORT).show();
+				return;
+			}

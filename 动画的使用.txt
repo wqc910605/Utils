@@ -1,0 +1,168 @@
+ 帧动画
+1. 拷贝图片资源到drawable目录下
+	2. 在res目录下，创建帧动画的xml资源 res/drawable/xxxx.xml
+		
+			<animation-list xmlns:android="http://schemas.android.com/apk/res/android" >
+    
+			<item android:drawable="@drawable/g1" android:duration="200"></item>
+			<item android:drawable="@drawable/g2" android:duration="200"></item>
+			<item android:drawable="@drawable/g3" android:duration="200"></item>
+			<item android:drawable="@drawable/g4" android:duration="200"></item>
+			
+			</animation-list>
+	3. 通过代码给ImageView设置帧动画资源
+		1. //将frame_anim.xml设置给IamgeView
+				imageView.setImageResource(R.drawable.frame_anim);
+	3. 通过布局文件，也可以给ImageView设置帧动画资源
+		1. android:src="@drawable/frame_anim"
+	4. 从ImageView上获取帧动画，然后播放
+
+			//由于上面给IamgeView设置了帧动画的资源，因此这里可以强转为AnimationDrawable
+			AnimationDrawable animationDrawable = (AnimationDrawable) imageView.getDrawable();
+			AnimationDrawable
+			AlphaAnimation
+			TranslateAnimation
+			RotateAnimation
+			ObjectAnimator
+			if (animationDrawable.isRunning()) {
+				animationDrawable.stop();
+			}
+			
+			animationDrawable.start();
+
+
+补间动画
+
+	核心类：Animation
+常识：补间动画修改的仅仅是图形的表像，而位置信息并没有改变，所有点击事件还是之前的位置。
+1. 透明（Alpha）
+	1. 通过纯代码形式
+
+
+		ic void alpha1(View view){
+		//创建动画对象
+		AlphaAnimation alphaAnimation = new AlphaAnimation(1, 0);
+		//设置属性
+		alphaAnimation.setDuration(3000);
+		//设置再重复执行的次数
+		alphaAnimation.setRepeatCount(1);
+		//设置重复模式
+		alphaAnimation.setRepeatMode(Animation.REVERSE);
+		//设置保持动画执行完时的样子
+		alphaAnimation.setFillAfter(true);
+		//设置“延时开始”执行
+		alphaAnimation.setStartOffset(2000);
+		//让ImageView执行该动画
+		imageView.startAnimation(alphaAnimation);
+	2. 通过补间动画资源的形式
+		1. 在res/anim/目录下创建补间动画资源文件xxx.xml
+
+				<?xml version="1.0" encoding="utf-8"?>
+				<alpha xmlns:android="http://schemas.android.com/apk/res/android"
+				    android:fromAlpha="0" 
+				    android:toAlpha="1"
+				    android:repeatCount="1"
+				    android:repeatMode="reverse"
+				    android:duration="4000"
+				    >
+				</alpha>
+		2. 将alpha_anim.xml转换为AlphaAnimation对象
+		
+				AlphaAnimation alphaAnimation = (AlphaAnimation) AnimationUtils.loadAnimation(this, R.anim.alpha_anim);
+		
+		3.让ImageView执行该动画
+
+			imageView.startAnimation(alphaAnimation);
+
+
+2. 平移
+
+3. 缩放
+
+4. 旋转
+
+5. 动画集合
+
+
+6. 补间动画监听器
+
+		translateAnimation.setAnimationListener(new AnimationListener() {
+			
+			@Override
+			public void onAnimationStart(Animation animation) {
+				Log.d("MainActivity", "onAnimationStart");		
+				
+			}
+			
+			@Override
+			public void onAnimationRepeat(Animation animation) {
+				Log.d("MainActivity", "onAnimationRepeat");				
+			}
+			
+			@Override
+			public void onAnimationEnd(Animation animation) {
+				Log.d("MainActivity", "onAnimationEnd");
+			}
+		});
+
+属性动画
+  核心类：ValuesAnimator->ObjectAnimator
+1. 透明
+	1. 纯代码形式
+		
+		 ObjectAnimator objectAnimator = ObjectAnimator.ofFloat(imageView, "alpha", 0,1);
+		//设置属性
+		objectAnimator.setDuration(2000);
+		objectAnimator.start();
+	2. 属性动画资源文件的使用
+		1. 在res/animator下常见属性动画资源
+			
+				<?xml version="1.0" encoding="utf-8"?>
+				<objectAnimator xmlns:android="http://schemas.android.com/apk/res/android" 
+				    android:duration="3000"
+				    android:repeatCount="1"
+				    android:repeatMode="reverse"
+				    android:propertyName="alpha"
+				    android:valueFrom="0"
+				    android:valueTo="1"
+				    >
+				</objectAnimator>
+		2. 在代码中使用属性动画资源
+
+				//将属性动画资源转换为ObjectAnimator对象
+				ObjectAnimator animator = (ObjectAnimator) AnimatorInflater.loadAnimator(this, R.animator.alpha_animator);
+				//设置target
+				animator.setTarget(imageView);
+				//启动动画
+				animator.start();
+		
+
+
+
+2. 平移
+	1. ObjectAnimator.ofFloat(imageView, "translationX", 0,150).setDuration(2000).start();
+
+3. 缩放
+
+4. 旋转
+
+5. 动画集合
+
+		AnimatorSet animatorSet = new AnimatorSet();
+		
+		ObjectAnimator rotateAnimator = ObjectAnimator.ofFloat(imageView, "rotationY", 0,180).setDuration(2000);
+		
+		ObjectAnimator translateAnimator = ObjectAnimator.ofFloat(imageView, "translationX", 0,150).setDuration(2000);
+		
+		//同时执行两个动画
+//		animatorSet.playTogether(rotateAnimator,translateAnimator);
+		//按照顺序执行
+		animatorSet.playSequentially(rotateAnimator,translateAnimator);
+		//启动动画
+		animatorSet.start();
+
+
+
+
+
+
