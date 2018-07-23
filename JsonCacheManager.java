@@ -6,12 +6,6 @@ import com.wwf.opensourcechina.utils.GsonUtil;
 
 import java.util.List;
 
-/**
- * 作者: old样
- * 描述:
- * 上海传智播客android黑马程序员
- **/
-
 public class JsonCacheManager {
 
         private  JsonCacheManager() {

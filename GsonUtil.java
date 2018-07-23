@@ -1,22 +1,3 @@
-package com.wwf.opensourcechina.utils;
-
-import android.text.TextUtils;
-
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonSyntaxException;
-import com.google.gson.reflect.TypeToken;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * 封装的是使用Gson解析json的方法
@@ -25,132 +6,301 @@ import java.util.Map;
  */
 public class GsonUtil {
 
-	/**
-	 * 把一个map变成json字符串
-	 * @param map
-	 * @return
-	 */
-	public static String parseMapToJson(Map<?, ?> map) {
-		try {
-			Gson gson = new Gson();
-			return gson.toJson(map);
-		} catch (Exception e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
+    private static       Gson       mGson       = null;
+    private static       JsonParser mGsonParser = null;
+    private static final String     TAG         = GsonUtil.class.getSimpleName();
 
-	/**
-	 * 把一个json字符串变成对象
-	 * @param json
-	 * @param cls
-	 * @return
-	 */
-	public static <T> T parseJsonToBean(String json, Class<T> cls) {
-		Gson gson = new Gson();
-		T t = null;
-		try {
-			t = gson.fromJson(json, cls);
-		} catch (Exception e) {
-			e.printStackTrace();
-			return null;
-		}
-		return t;
-	}
-
-	//解析json数组
-	public static <T> List<T> fromJsonArray(String json, Class<T> clazz)  {
-		List<T> lst = null;
-		try {
-			lst = new ArrayList<T>();
-
-			JsonArray array = new JsonParser().parse(json).getAsJsonArray();
-			for(final JsonElement elem : array){
-                lst.add(new Gson().fromJson(elem, clazz));
+    public static Gson getGson() {
+        if (mGson == null) {
+            synchronized (GsonUtil.class) {
+                if (mGson == null) {
+                    mGson = new GsonBuilder().setExclusionStrategies(new FooAnnotationExclusionStrategy())
+                            //							.setDateFormat("yyyy-MM-dd")
+                            //							.setDateFormat("yyyy-MM-dd HH:mm:ss")
+                            .serializeNulls()//序列化null
+                            .registerTypeAdapter(Date.class, new DateSerializer()).setDateFormat(DateFormat.LONG)
+                            .registerTypeAdapter(Date.class, new DateDeserializer()).setDateFormat(DateFormat.LONG)
+                            .registerTypeAdapter(Integer.class, new IntegerDefault0Adapter())
+                            .registerTypeAdapter(int.class, new IntegerDefault0Adapter())
+                            .registerTypeAdapter(Double.class, new DoubleDefault0Adapter())
+                            .registerTypeAdapter(double.class, new DoubleDefault0Adapter())
+                            .registerTypeAdapter(Long.class, new LongDefault0Adapter())
+                            .registerTypeAdapter(long.class, new LongDefault0Adapter())
+                            .create();
+                }
             }
-		} catch (JsonSyntaxException e) {
-			e.printStackTrace();
-			return null;
-		}
+        }
+        return mGson;
+    }
 
-		return lst;
-	}
-
-
-	/**
-	 * 把json字符串变成map
-	 * @param json
-	 * @return
-	 */
-	public static HashMap<String, Object> parseJsonToMap(String json) {
-		Gson gson = new Gson();
-		Type type = new TypeToken<HashMap<String, Object>>() {
-		}.getType();
-		HashMap<String, Object> map = null;
-		try {
-			map = gson.fromJson(json, type);
-		} catch (Exception e) {
-			e.printStackTrace();
-			return null;
-		}
-		return map;
-	}
-/*	public static <T> List<T> changeGsonToList(String gsonString, T cls) {
-		Gson gson = new Gson();
-		List<T> list = gson.fromJson(gsonString, new TypeToken<List<T>>() {
-		}.getType());
-		return list;
-	}*/
+    public static JsonParser getGsonParser() {
+        if (mGsonParser == null) {
+            synchronized (GsonUtil.class) {
+                if (mGsonParser == null) {
+                    mGsonParser = new JsonParser();
+                }
+            }
+        }
+        return mGsonParser;
+    }
 
 
-/*	*//**
-	 * 把json字符串变成集合
-	 * params: new TypeToken<List<yourbean>>(){}.getType(),
-	 * 
-	 * @param json
-	 * @param type  new TypeToken<List<yourbean>>(){}.getType()
-	 * @return
-	 *//*
-	public static <T> List<T> parseJsonToList(String json, Type type) {
-		Gson gson = new Gson();
-		List<T> list = gson.fromJson(json, type);
-		return list;
-	}*/
-/*	public static <T> List<T> parseJsonToList(String json, Class<T> clss) {
-		Gson gson = new Gson();
-		List<T> list = gson.fromJson(json, new TypeToken<List<T>>(){}.getType());
-		return list;
-	}*/
-/*	public static <T> List<T> parseJsonToList2(String json) {
-		Gson gson = new Gson();
-		List<T> list = gson.fromJson(json, new TypeToken<List<T>>(){}.getType());
-		return list;
-	}*/
+    public static String formatObjectToJson(Object object) {
+        return getGson().toJson(object);
+    }
 
-	/**
-	 * 
-	 * 获取json串中某个字段的值，注意，只能获取同一层级的value
-	 * 
-	 * @param json
-	 * @param key
-	 * @return
-	 */
-	public static String getFieldValue(String json, String key) {
-		if (TextUtils.isEmpty(json))
-			return null;
-		if (!json.contains(key))
-			return "";
-		JSONObject jsonObject = null;
-		String value = null;
-		try {
-			jsonObject = new JSONObject(json);
-			value = jsonObject.getString(key);
-		} catch (JSONException e) {
-			e.printStackTrace();
-			return "";
-		}
+    public static <T> T parseJsonToBean(String json, Class<T> tClass) {
+        if (TextUtils.isEmpty(json)) {
+            return null;
+        } else {
+            try {
+                return getGson().fromJson(json, tClass);
+            } catch (JsonSyntaxException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+    }
 
-		return value;
-	}
+    public static <T> List<T> parseJsonToList(String json, Class<T> tClass) {
+        List<T> tList = new ArrayList<>();
+        JsonElement jsonElementSrc = getGsonParser().parse(json);
+        if (jsonElementSrc.isJsonArray()) {
+            JsonArray jsonArray = jsonElementSrc.getAsJsonArray();
+            for (JsonElement jsonElement : jsonArray) {
+                tList.add(getGson().fromJson(jsonElement, tClass));
+            }
+        } else if (jsonElementSrc.isJsonObject()) {
+            tList.add(getGson().fromJson(jsonElementSrc, tClass));
+        } else if (jsonElementSrc.isJsonNull()) {
+            Log.e(TAG, "json is null!");
+        } else if (jsonElementSrc.isJsonPrimitive()) {
+            JsonPrimitive asJsonPrimitive = jsonElementSrc.getAsJsonPrimitive();
+            Log.e(TAG, "json is jsonPrimitive,json=" + asJsonPrimitive.toString());
+        }
+        return tList;
+    }
 
+    public static <T> List<T> parseJsonToListByType(String json, Class<T> clazz) {
+        List<T> list = null;
+        if (json != null) {
+            //根据泛型返回解析指定的类型,TypeToken<List<T>>{}.getType()获取返回类型
+            list = getGson().fromJson(json, new TypeToken<List<T>>() {
+            }.getType());
+        }
+        return list;
+    }
+
+    public static <T> List<Map<String, T>> parseJsonToMapList(String json) {
+        return getGson().fromJson(json, new TypeToken<List<Map<String, T>>>() {
+        }.getType());
+    }
+
+    public static <T> Map<String, T> parseJsonToMap(String json) {
+        return getGson().fromJson(json, new TypeToken<Map<String, T>>() {
+        }.getType());
+    }
+
+
+    public static <T> T parseJSON(String json, Class<T> clazz) {
+        T info = getGson().fromJson(json, clazz);
+        return info;
+    }
+
+    /**
+     * @param json
+     * @param clazz
+     * @return
+     */
+    public static <T> ArrayList<T> jsonToArrayList(String json, Class<T> clazz) {
+        Type type = new TypeToken<ArrayList<JsonObject>>() {
+        }.getType();
+        ArrayList<JsonObject> jsonObjects = getGson().fromJson(json, type);
+        ArrayList<T> arrayList = new ArrayList<>();
+        for (JsonObject jsonObject : jsonObjects) {
+            arrayList.add(getGson().fromJson(jsonObject, clazz));
+        }
+        return arrayList;
+    }
+
+
+    /** @param json
+     * @param clazz
+     * @param <T>
+     * @return
+     */
+    public static <T> BaseBean<T> parseJson2Bean(String json, Class<T> clazz) {
+        BaseBean<T> tBaseBean = new BaseBean<>();
+        List<T> list = null;
+        try {
+            JSONObject jsonObject = new JSONObject(json);
+            String data = jsonObject.getString("data");
+            int code = jsonObject.getInt("code");
+            String msg = jsonObject.getString("msg");
+            long timestamp = jsonObject.getLong("timestamp");
+
+            tBaseBean.setCode(code);
+            tBaseBean.setMsg(msg);
+            tBaseBean.setTimestamp(timestamp);
+
+            if (!TextUtils.isEmpty(data)) {
+                Object jsonTokener = new JSONTokener(data).nextValue();
+                if (jsonTokener instanceof JSONObject) {//对象型
+                    T t = parseJSON(data, clazz);
+                    tBaseBean.setData(t);
+                } else if (jsonTokener instanceof JSONArray) {
+                    list = jsonToArrayList(data, clazz);
+                    tBaseBean.setDataList(list);
+                }
+
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return tBaseBean;
+    }
+
+    public static class DateDeserializer implements JsonDeserializer<Date> {
+
+        public Date deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            SimpleDateFormat sdf2 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            Date date = null;
+            long time;
+            if ((json.toString().contains("-") && json.getAsJsonPrimitive().isString()) || TextUtils.isEmpty(json.getAsJsonPrimitive().getAsString().trim())) {
+                try {
+                    String jsonTrim = json.toString().trim();
+                    if (jsonTrim.contains(" ")) {
+                        date = sdf2.parse(json.getAsJsonPrimitive().getAsString());
+                    } else {
+                        date = sdf.parse(json.getAsJsonPrimitive().getAsString());
+                    }
+                } catch (ParseException e) {
+                    Log.e(TAG, e.toString());
+                    date = new Date();
+                }
+                time = date.getTime();
+            } else {
+                time = json.getAsJsonPrimitive().getAsLong();
+            }
+            return new Date(time);
+        }
+    }
+
+    public static class DateSerializer implements JsonSerializer<Date> {
+        public JsonElement serialize(Date src, Type typeOfSrc, JsonSerializationContext context) {
+            return new JsonPrimitive(src.getTime());
+        }
+    }
+
+    public static class IntegerDefault0Adapter implements JsonSerializer<Integer>, JsonDeserializer<Integer> {
+        @Override
+        public Integer deserialize(JsonElement json, Type typeOfT,
+                                   JsonDeserializationContext context) throws JsonParseException {
+            try {
+                if (json.getAsString().equals("") || json.getAsString().equals("null")) {
+                    return 0;
+                }
+            } catch (Exception ignore) {
+            }
+            try {
+                return json.getAsInt();
+            } catch (NumberFormatException e) {
+                throw new JsonSyntaxException(e);
+            }
+        }
+
+        @Override
+        public JsonElement serialize(Integer src, Type typeOfSrc, JsonSerializationContext context) {
+            return new JsonPrimitive(src);
+        }
+    }
+
+    public static class DoubleDefault0Adapter implements JsonSerializer<Double>, JsonDeserializer<Double> {
+        @Override
+        public Double deserialize(JsonElement json, Type typeOfT,
+                                  JsonDeserializationContext context) throws JsonParseException {
+            try {
+                if (json.getAsString().equals("") || json.getAsString().equals("null")) {
+                    return 0D;
+                }
+            } catch (Exception ignore) {
+            }
+            try {
+                return json.getAsDouble();
+            } catch (NumberFormatException e) {
+                throw new JsonSyntaxException(e);
+            }
+        }
+
+        @Override
+        public JsonElement serialize(Double src, Type typeOfSrc, JsonSerializationContext context) {
+            return new JsonPrimitive(src);
+        }
+    }
+
+    public static class LongDefault0Adapter implements JsonSerializer<Long>, JsonDeserializer<Long> {
+        @Override
+        public Long deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+                throws JsonParseException {
+            try {
+                if (json.getAsString().equals("") || json.getAsString().equals("null")) {//定义为long类型,如果后台返回""或者null,则返回0
+                    return 0l;
+                }
+            } catch (Exception ignore) {
+            }
+            try {
+                return json.getAsLong();
+            } catch (NumberFormatException e) {
+                throw new JsonSyntaxException(e);
+            }
+        }
+
+        @Override
+        public JsonElement serialize(Long src, Type typeOfSrc, JsonSerializationContext context) {
+            return new JsonPrimitive(src);
+        }
+    }
+
+
+    //过滤不解析的属性
+    public @interface FooAnnotation {
+        // some implementation here
+    }
+
+    // Excludes any field (or class) that is tagged with an "@FooAnnotation"
+    private static class FooAnnotationExclusionStrategy implements ExclusionStrategy {
+        public boolean shouldSkipClass(Class<?> clazz) {
+            return false;//clazz.getAnnotation(FooAnnotation.class) != null;
+        }
+
+        public boolean shouldSkipField(FieldAttributes f) {
+            String fieldName = f.getName();
+            Class<?> theClass = f.getDeclaringClass();
+            return isFieldInSuperclass(theClass, fieldName);//f.getAnnotation(FooAnnotation.class) != null;
+        }
+
+        private boolean isFieldInSuperclass(Class<?> subclass, String fieldName) {
+            Class<?> superclass = subclass.getSuperclass();
+            Field field;
+            while(superclass != null) {
+                field = getField(superclass, fieldName);
+
+                if(field != null)
+                    return true;
+
+                superclass = superclass.getSuperclass();
+            }
+            return false;
+        }
+
+        private Field getField(Class<?> theClass, String fieldName) {
+            try {
+                return theClass.getDeclaredField(fieldName);
+            } catch(Exception e) {
+                return null;
+            }
+        }
+    }
 }
